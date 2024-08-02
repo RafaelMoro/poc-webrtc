@@ -14,6 +14,7 @@ let offer = null
 let answer = null
 let newUser = null;
 const CHANNEL_NAME = 'my-channel'
+const BACKEND_URI = import.meta.env.VITE_BACKEND_URI
 const connectionWebRTC = new RTCPeerConnection(configuration)
 const channel = connectionWebRTC.createDataChannel(CHANNEL_NAME)
 channel.onmessage = (event) => {
@@ -92,8 +93,7 @@ async function checkDbConnection() {
   try {
     const paragraph = document.querySelector('#backend-status')
     paragraph.innerText = 'Loading...'
-    const backendUri = import.meta.env.VITE_BACKEND_URI_LOCAL
-    const response = await axios.get(backendUri)
+    const response = await axios.get(BACKEND_URI)
     const status = response?.data?.message
     if (status === 'Planning table backend answering') {
       paragraph.innerText = 'Backend is up and running'
@@ -105,12 +105,11 @@ async function checkDbConnection() {
 
 async function sendOffer() {
   try {
-    const backendUri = import.meta.env.VITE_BACKEND_URI_LOCAL
     const payload = {
       offer,
       offerName: 'my-channel',
     }
-    const response = await axios.post(`${backendUri}/offer`, payload)
+    const response = await axios.post(`${BACKEND_URI}/offer`, payload)
     console.log('success', response?.data?.message)
   } catch (error) {
     console.error('error creating new answer', error)
@@ -119,8 +118,7 @@ async function sendOffer() {
 
 async function getOffer() {
   try {
-    const backendUri = import.meta.env.VITE_BACKEND_URI_LOCAL
-    const response = await axios.get(`${backendUri}/offer/${CHANNEL_NAME}`)
+    const response = await axios.get(`${BACKEND_URI}/offer/${CHANNEL_NAME}`)
     const offers = response?.data?.data
     const message = response?.data?.message
     if (message === 'Offer not found' && !offers) {
@@ -138,8 +136,7 @@ async function getOffer() {
 
 async function getAnswer() {
   try {
-    const backendUri = import.meta.env.VITE_BACKEND_URI_LOCAL
-    const response = await axios.get(`${backendUri}/answer/${CHANNEL_NAME}`)
+    const response = await axios.get(`${BACKEND_URI}/answer/${CHANNEL_NAME}`)
     const answers = response?.data?.data
     const message = response?.data?.message
     if (message === 'Answer not found' && !answers) {
@@ -157,12 +154,11 @@ async function getAnswer() {
 
 async function sendAnswer() {
   try {
-    const backendUri = import.meta.env.VITE_BACKEND_URI_LOCAL
     const payload = {
       answer,
       answerName: 'my-channel',
     }
-    const response = await axios.post(`${backendUri}/answer`, payload)
+    const response = await axios.post(`${BACKEND_URI}/answer`, payload)
     console.log('success', response?.data?.message)
   } catch (error) {
     console.error(error)
