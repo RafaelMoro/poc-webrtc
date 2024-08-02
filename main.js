@@ -107,9 +107,9 @@ async function sendOffer() {
   try {
     const payload = {
       offer,
-      offerName: 'my-channel',
+      offerName: CHANNEL_NAME,
     }
-    const response = await axios.post(`${BACKEND_URI}/offer`, payload)
+    const response = await axios.put(`${BACKEND_URI}/offer`, payload)
     console.log('success', response?.data?.message)
   } catch (error) {
     console.error('error creating new answer', error)
@@ -156,9 +156,9 @@ async function sendAnswer() {
   try {
     const payload = {
       answer,
-      answerName: 'my-channel',
+      answerName: CHANNEL_NAME,
     }
-    const response = await axios.post(`${BACKEND_URI}/answer`, payload)
+    const response = await axios.put(`${BACKEND_URI}/answer`, payload)
     console.log('success', response?.data?.message)
   } catch (error) {
     console.error(error)
