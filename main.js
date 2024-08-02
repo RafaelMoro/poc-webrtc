@@ -12,8 +12,10 @@ const configuration = {
 }
 let offer = null
 let answer = null
+let newUser = null;
+const CHANNEL_NAME = 'my-channel'
 const connectionWebRTC = new RTCPeerConnection(configuration)
-const channel = connectionWebRTC.createDataChannel('my-channel')
+const channel = connectionWebRTC.createDataChannel(CHANNEL_NAME)
 channel.onmessage = (event) => {
   console.log('Got a message', event.data)
 }
@@ -21,17 +23,17 @@ channel.onmessage = (event) => {
 channel.onopen = (event) = console.log('Channel opened')
 
 connectionWebRTC.onicecandidate = (event) => {
-  // offer = JSON.stringify(connectionWebRTC.localDescription)
-  //   console.log(`
-  //   New user
-  //   Offer: ${offer}
-  // `)
+  newUser = JSON.stringify(connectionWebRTC.localDescription)
+    console.log(`
+    New user
+    Offer: ${newUser}
+  `)
 
-  answer = JSON.stringify(connectionWebRTC.localDescription)
-  console.log(`
-  New user
-  Answer: ${answer}
-`)
+//   answer = JSON.stringify(connectionWebRTC.localDescription)
+//   console.log(`
+//   New user
+//   Answer: ${answer}
+// `)
 }
 
 connectionWebRTC.ondatachannel = (event) => {
@@ -48,7 +50,7 @@ connectionWebRTC.ondatachannel = (event) => {
   }
 }
 
-// First we set the offer
+/** Only WebRTC functions */
 async function setOfferFromRemote(newOffer) {
   // edit here and put the offer
   try {
@@ -63,7 +65,6 @@ async function setOfferFromRemote(newOffer) {
 // When the user wants to join, first we create an offer
 async function createOffer() {
   const offerCreated = await connectionWebRTC.createOffer()
-  console.log('offer created', offerCreated)
   connectionWebRTC.setLocalDescription(offerCreated)
   offer = JSON.stringify(offerCreated)
   console.log('offer set succesfully')
@@ -74,6 +75,7 @@ async function createAnswer() {
   try {
     const newAnswer = await connectionWebRTC.createAnswer()
     connectionWebRTC.setLocalDescription(newAnswer)
+    answer = JSON.stringify(newAnswer)
     console.log('answer created')
   } catch (error) {
     console.warn('error creating new answer', error)
@@ -84,6 +86,8 @@ async function setAnswer(answer) {
   await connectionWebRTC.setRemoteDescription(answer)
 }
 
+
+/** Only BE functions */
 async function checkDbConnection() {
   try {
     const paragraph = document.querySelector('#backend-status')
@@ -99,18 +103,71 @@ async function checkDbConnection() {
   }
 }
 
-document.querySelector('#create-session').addEventListener('click', async () => {
+async function sendOffer() {
   try {
     const backendUri = import.meta.env.VITE_BACKEND_URI_LOCAL
-    // Create an offer
-    await createOffer()
-    // Send the offer to the API
     const payload = {
       offer,
       offerName: 'my-channel',
     }
     const response = await axios.post(`${backendUri}/offer`, payload)
     console.log('success', response?.data?.message)
+  } catch (error) {
+    console.error('error creating new answer', error)
+  }
+}
+
+async function getOffer() {
+  try {
+    const backendUri = import.meta.env.VITE_BACKEND_URI_LOCAL
+    const response = await axios.get(`${backendUri}/offer/${CHANNEL_NAME}`)
+    const offers = response?.data?.data
+    console.log('response', response?.data?.data)
+    if (offers.length === 0) {
+      console.log('No offer found')
+      return
+    }
+
+    const [offer] = offers
+    const offerParsed = JSON.parse(offer)
+    return offerParsed;
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+async function sendAnswer() {
+  try {
+    const backendUri = import.meta.env.VITE_BACKEND_URI_LOCAL
+    const payload = {
+      answer,
+      answerName: 'my-channel',
+    }
+    const response = await axios.post(`${backendUri}/answer`, payload)
+    console.log('success', response?.data?.message)
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+document.querySelector('#create-session').addEventListener('click', async () => {
+  try {
+    // Create an offer
+    await createOffer()
+    // Send the offer to the API
+    await sendOffer()
+  } catch (error) {
+    console.error(error)
+  }
+})
+
+document.querySelector('#join-session').addEventListener('click', async () => {
+  try {
+    // Get the offer from the API
+    const newOffer = await getOffer()
+    await setOfferFromRemote(newOffer)
+    await createAnswer()
+    await sendAnswer()
   } catch (error) {
     console.error(error)
   }
