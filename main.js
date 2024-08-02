@@ -169,12 +169,39 @@ async function sendAnswer() {
   }
 }
 
+function startListeningAnswers() {
+  // Declare the interval ID
+  let intervalId;
+
+  // Define the function that runs periodically
+  const listenAnswers = async () => {
+    const newAnswer = await getAnswer();
+
+    // If the task returns a response, clear the interval to stop further executions
+    if (newAnswer) {
+      await setAnswer(newAnswer)
+      clearInterval(intervalId);
+      console.log('Task stopped due to response:');
+    }
+  };
+
+  // Execute the task immediately
+  listenAnswers();
+
+  // Set up the interval to run the task every 10 seconds (10000 milliseconds)
+  intervalId = setInterval(listenAnswers, 10000);
+}
+
 document.querySelector('#create-session').addEventListener('click', async () => {
   try {
+    const joinSessionButton = document.querySelector('#join-session')
+    joinSessionButton.disabled = true
+
     // Create an offer
     await createOffer()
     // Send the offer to the API
     await sendOffer()
+    startListeningAnswers()
   } catch (error) {
     console.error(error)
   }
@@ -182,6 +209,9 @@ document.querySelector('#create-session').addEventListener('click', async () => 
 
 document.querySelector('#join-session').addEventListener('click', async () => {
   try {
+    const createSessionButton = document.querySelector('#create-session')
+    createSessionButton.disabled = true
+
     // Get the offer from the API
     const newOffer = await getOffer()
     await setOfferFromRemote(newOffer)
@@ -191,12 +221,16 @@ document.querySelector('#join-session').addEventListener('click', async () => {
     console.error(error)
   }
 })
-document.querySelector('#test-button').addEventListener('click', async () => {
-  try {
-    await getAnswer()
-  } catch (error) {
-    console.error(error)
-  }
-})
+// document.querySelector('#test-button').addEventListener('click', async () => {
+//   try {
+//     await getAnswer()
+//   } catch (error) {
+//     console.error(error)
+//   }
+// })
 document.querySelector('#check-db-connection').addEventListener('click', checkDbConnection)
+
+document.querySelector('#send-message').addEventListener('click', () => {
+  connectionWebRTC.myDataChannel.send('Hello!!')
+})
 
