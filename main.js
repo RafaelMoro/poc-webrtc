@@ -122,15 +122,34 @@ async function getOffer() {
     const backendUri = import.meta.env.VITE_BACKEND_URI_LOCAL
     const response = await axios.get(`${backendUri}/offer/${CHANNEL_NAME}`)
     const offers = response?.data?.data
-    console.log('response', response?.data?.data)
-    if (offers.length === 0) {
-      console.log('No offer found')
-      return
+    const message = response?.data?.message
+    if (message === 'Offer not found' && !offers) {
+      console.log('Offer not found')
+      return null
     }
 
     const [offer] = offers
     const offerParsed = JSON.parse(offer)
     return offerParsed;
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+async function getAnswer() {
+  try {
+    const backendUri = import.meta.env.VITE_BACKEND_URI_LOCAL
+    const response = await axios.get(`${backendUri}/answer/${CHANNEL_NAME}`)
+    const answers = response?.data?.data
+    const message = response?.data?.message
+    if (message === 'Answer not found' && !answers) {
+      console.log('Answer not found')
+      return null
+    }
+
+    const [answer] = answers
+    const answerParsed = JSON.parse(answer)
+    return answerParsed;
   } catch (error) {
     console.error(error)
   }
@@ -168,6 +187,13 @@ document.querySelector('#join-session').addEventListener('click', async () => {
     await setOfferFromRemote(newOffer)
     await createAnswer()
     await sendAnswer()
+  } catch (error) {
+    console.error(error)
+  }
+})
+document.querySelector('#test-button').addEventListener('click', async () => {
+  try {
+    await getAnswer()
   } catch (error) {
     console.error(error)
   }
