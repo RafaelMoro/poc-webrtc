@@ -10,6 +10,8 @@ const configuration = {
     }
   ],
 }
+let offer = null
+let answer = null
 const connectionWebRTC = new RTCPeerConnection(configuration)
 const channel = connectionWebRTC.createDataChannel('my-channel')
 channel.onmessage = (event) => {
@@ -60,9 +62,10 @@ async function setOfferFromRemote(newOffer) {
 
 // When the user wants to join, first we create an offer
 async function createOffer() {
-  const offer = await connectionWebRTC.createOffer()
-  console.log('offer', offer)
-  connectionWebRTC.setLocalDescription(offer)
+  const offerCreated = await connectionWebRTC.createOffer()
+  console.log('offer created', offerCreated)
+  connectionWebRTC.setLocalDescription(offerCreated)
+  offer = JSON.stringify(offerCreated)
   console.log('offer set succesfully')
 }
 
@@ -97,9 +100,20 @@ async function checkDbConnection() {
 }
 
 document.querySelector('#create-session').addEventListener('click', async () => {
-  // Create an offer
-  await createOffer()
-  // Send the offer to the API
+  try {
+    const backendUri = import.meta.env.VITE_BACKEND_URI_LOCAL
+    // Create an offer
+    await createOffer()
+    // Send the offer to the API
+    const payload = {
+      offer,
+      offerName: 'my-channel',
+    }
+    const response = await axios.post(`${backendUri}/offer`, payload)
+    console.log('success', response?.data?.message)
+  } catch (error) {
+    console.error(error)
+  }
 })
 document.querySelector('#check-db-connection').addEventListener('click', checkDbConnection)
 
