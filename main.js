@@ -1,4 +1,6 @@
+import axios from 'axios'
 import './style.css'
+
 
 /** Web RTC things  */
 const configuration = {
@@ -14,7 +16,7 @@ channel.onmessage = (event) => {
   console.log('Got a message', event.data)
 }
 
-channel.onopen = (event) = console.log('Connection opened')
+channel.onopen = (event) = console.log('Channel opened')
 
 connectionWebRTC.onicecandidate = (event) => {
   // offer = JSON.stringify(connectionWebRTC.localDescription)
@@ -79,8 +81,25 @@ async function setAnswer(answer) {
   await connectionWebRTC.setRemoteDescription(answer)
 }
 
+async function checkDbConnection() {
+  try {
+    const paragraph = document.querySelector('#backend-status')
+    paragraph.innerText = 'Loading...'
+    const backendUri = import.meta.env.VITE_BACKEND_URI_LOCAL
+    const response = await axios.get(backendUri)
+    const status = response?.data?.message
+    if (status === 'Planning table backend answering') {
+      paragraph.innerText = 'Backend is up and running'
+    }
+  } catch (error) {
+    console.error(error)
+  }
+}
+
 document.querySelector('#create-session').addEventListener('click', async () => {
   // Create an offer
   await createOffer()
   // Send the offer to the API
 })
+document.querySelector('#check-db-connection').addEventListener('click', checkDbConnection)
+
